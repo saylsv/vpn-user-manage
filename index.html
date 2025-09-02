@@ -133,17 +133,24 @@
 
             users.forEach((user, index) => {
                 const daysLeft = getDaysLeft(user.expiryDate);
-                let status, statusColor;
+                let status, statusColor, toggleText;
 
-                if (daysLeft <= 0) {
+                if (!user.enabled) {
+                    status = 'Disabled';
+                    statusColor = 'bg-gray-500';
+                    toggleText = 'Enable';
+                } else if (daysLeft <= 0) {
                     status = 'Expired';
                     statusColor = 'bg-red-500';
+                    toggleText = 'Disable';
                 } else if (daysLeft <= 7) {
                     status = `Expiring in ${daysLeft} day${daysLeft > 1 ? 's' : ''}`;
                     statusColor = 'bg-yellow-500';
+                    toggleText = 'Disable';
                 } else {
                     status = `Active (${daysLeft} day${daysLeft > 1 ? 's' : ''} left)`;
                     statusColor = 'bg-green-500';
+                    toggleText = 'Disable';
                 }
 
                 const userCard = document.createElement('div');
@@ -155,6 +162,9 @@
                     </div>
                     <div class="flex items-center space-x-2">
                         <span class="status-badge ${statusColor} text-white">${status}</span>
+                        <button class="toggle-btn bg-blue-600 hover:bg-blue-700 text-white rounded-md px-3 py-1 text-sm transition-colors duration-200" data-index="${index}">
+                            ${toggleText}
+                        </button>
                         <button class="delete-btn bg-red-600 hover:bg-red-700 text-white rounded-full p-2" data-index="${index}">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -183,7 +193,7 @@
                     return;
                 }
 
-                const newUser = { username, expiryDate };
+                const newUser = { username, expiryDate, enabled: true };
                 users.push(newUser);
                 saveUsers();
                 renderUserList();
@@ -194,11 +204,18 @@
             }
         });
 
-        // Handle user deletion
+        // Handle user deletion and toggle
         document.getElementById('user-list').addEventListener('click', (e) => {
-            if (e.target.closest('.delete-btn')) {
-                const index = e.target.closest('.delete-btn').dataset.index;
+            const deleteBtn = e.target.closest('.delete-btn');
+            const toggleBtn = e.target.closest('.toggle-btn');
+            if (deleteBtn) {
+                const index = deleteBtn.dataset.index;
                 users.splice(index, 1);
+                saveUsers();
+                renderUserList();
+            } else if (toggleBtn) {
+                const index = toggleBtn.dataset.index;
+                users[index].enabled = !users[index].enabled;
                 saveUsers();
                 renderUserList();
             }
