@@ -3,419 +3,213 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Expiration Manager</title>
+    <title>Subscription Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-            color: #374151;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            padding: 2rem;
+            background-color: #1a202c;
+            color: #e2e8f0;
         }
         .container {
             max-width: 900px;
-            width: 100%;
-            background-color: #ffffff;
-            border-radius: 1rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            padding: 2rem;
-        }
-        .form-group {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-        .form-group input, .form-group button {
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            border: 1px solid #d1d5db;
-            outline: none;
-            transition: all 0.2s ease-in-out;
-            flex: 1 1 200px;
-        }
-        .form-group input:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-        }
-        .form-group button {
-            background-color: #2563eb;
-            color: #ffffff;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-        }
-        .form-group button:hover {
-            background-color: #1d4ed8;
         }
         .status-badge {
-            font-weight: 600;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.5rem;
-        }
-        .status-expired {
-            background-color: #fecaca;
-            color: #b91c1c;
-        }
-        .status-days-left {
-            background-color: #bfdbfe;
-            color: #1d4ed8;
-        }
-        .status-expires-today {
-            background-color: #fcd34d;
-            color: #92400e;
-        }
-        th, td {
-            padding: 1rem;
-            text-align: left;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1.5rem;
-        }
-        thead {
-            background-color: #f9fafb;
-        }
-        tbody tr:nth-child(odd) {
-            background-color: #f9fafb;
-        }
-        tbody tr:hover {
-            background-color: #e5e7eb;
-        }
-        .user-id-text {
-            word-break: break-all;
-            background-color: #e5e7eb;
-            padding: 0.5rem;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
-        }
-        .action-button {
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
             font-weight: 500;
-            transition: background-color 0.2s;
-            color: #ffffff;
-        }
-        .delete-button {
-            background-color: #ef4444;
-        }
-        .delete-button:hover {
-            background-color: #dc2626;
-        }
-        .edit-button {
-            background-color: #3b82f6;
-        }
-        .edit-button:hover {
-            background-color: #2563eb;
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 100;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            justify-content: center;
-            align-items: center;
-        }
-        .modal-content {
-            background-color: #fefefe;
-            padding: 2rem;
-            border-radius: 1rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
-            width: 90%;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-        .modal-buttons {
-            display: flex;
-            justify-content: flex-end;
-            gap: 0.75rem;
+            font-size: 0.875rem;
         }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+<body class="p-6 md:p-12 min-h-screen">
 
-    <div class="container">
-        <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">User Expiration Manager</h1>
-        <p class="text-gray-600 mb-4 text-center">
-            This app demonstrates real-time user management with Firestore.
-        </p>
+    <div id="app" class="container mx-auto">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-2">Subscription Manager</h1>
+            <p class="text-lg md:text-xl text-gray-400">Track user subscription status and expiry dates.</p>
+        </header>
 
-        <!-- Display the User ID for collaboration -->
-        <div class="mb-6">
-            <h2 class="text-lg font-semibold mb-2">Your User ID:</h2>
-            <p id="user-id" class="user-id-text text-sm font-mono text-gray-700">Loading...</p>
+        <!-- Input Form -->
+        <div class="bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-bold mb-4 text-white">Add New User</h2>
+            <form id="user-form" class="space-y-4">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-300">Username</label>
+                    <input type="text" id="username" name="username" class="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-indigo-500 shadow-sm transition-colors duration-200 p-2" placeholder="Enter username" required>
+                </div>
+                <div>
+                    <label for="expiry-date" class="block text-sm font-medium text-gray-300">Expiry Date</label>
+                    <input type="date" id="expiry-date" name="expiry-date" class="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-indigo-500 shadow-sm transition-colors duration-200 p-2" required>
+                </div>
+                <button type="submit" class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
+                    Add User
+                </button>
+            </form>
         </div>
 
-        <!-- Form to add new users -->
-        <form id="add-user-form" class="mb-6">
-            <div class="form-group">
-                <input type="text" id="username-input" placeholder="Username" required class="flex-grow w-full md:w-auto">
-                <input type="date" id="exp-date-input" required class="flex-grow w-full md:w-auto">
-                <button type="submit" class="flex-grow w-full md:w-auto">Add User</button>
-            </div>
-        </form>
-
-        <!-- Search input field -->
-        <div class="mb-6">
-            <input type="text" id="search-input" placeholder="Search by username..." class="w-full p-2 rounded-md border border-gray-300">
-        </div>
-
-        <!-- Table to display users -->
-        <div class="overflow-x-auto rounded-lg">
-            <table class="w-full text-sm text-gray-700">
-                <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
-                    <tr>
-                        <th scope="col" class="py-3 px-6 rounded-tl-lg">Username</th>
-                        <th scope="col" class="py-3 px-6">Expiration Date</th>
-                        <th scope="col" class="py-3 px-6">Status</th>
-                        <th scope="col" class="py-3 px-6 rounded-tr-lg">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="users-table-body" class="bg-white divide-y divide-gray-200">
-                    <!-- Data will be populated here by JavaScript -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Edit Modal -->
-    <div id="edit-modal" class="modal">
-        <div class="modal-content">
-            <h2 class="text-xl font-bold text-gray-800">Edit User Expiration Date</h2>
-            <p class="text-gray-600" id="edit-modal-username"></p>
-            <input type="date" id="edit-exp-date-input" class="p-2 border rounded-md w-full">
-            <div class="modal-buttons">
-                <button id="cancel-edit-btn" class="action-button bg-gray-400 hover:bg-gray-500">Cancel</button>
-                <button id="save-edit-btn" class="action-button bg-blue-500 hover:bg-blue-600">Save</button>
+        <!-- User List Display -->
+        <div class="bg-gray-800 rounded-2xl shadow-lg p-6">
+            <h2 class="text-2xl font-bold mb-4 text-white">User List</h2>
+            <div id="user-list" class="space-y-4">
+                <!-- User cards will be rendered here by JavaScript -->
             </div>
         </div>
     </div>
 
-    <!-- Delete Modal -->
-    <div id="delete-modal" class="modal">
-        <div class="modal-content">
-            <h2 class="text-xl font-bold text-gray-800">Confirm Deletion</h2>
-            <p class="text-gray-600">Are you sure you want to delete this user?</p>
-            <div class="modal-buttons">
-                <button id="cancel-delete-btn" class="action-button bg-gray-400 hover:bg-gray-500">Cancel</button>
-                <button id="confirm-delete-btn" class="action-button bg-red-500 hover:bg-red-600">Delete</button>
-            </div>
+    <!-- Custom Modal for Alerts -->
+    <div id="custom-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4 z-50">
+        <div class="bg-gray-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center">
+            <h3 id="modal-title" class="text-xl font-bold text-white mb-4"></h3>
+            <p id="modal-message" class="text-gray-300 mb-6"></p>
+            <button id="modal-close-button" class="py-2 px-4 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 transition-colors duration-200">OK</button>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, deleteDoc, doc, updateDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <script>
+        // Custom modal functions
+        const modal = document.getElementById('custom-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const modalCloseButton = document.getElementById('modal-close-button');
 
-        setLogLevel('debug');
-        
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        function showModal(title, message) {
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
 
-        let db, auth, userId, allUsers = [];
+        modalCloseButton.addEventListener('click', () => {
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        });
 
-        const initFirebaseAndAuth = async () => {
-            // Your web app's Firebase configuration
-            const firebaseConfig = {
-                apiKey: "AIzaSyCwA7rqlO_E5PHF-EYKgnl5H0D8qqNS1Mw",
-                authDomain: "vpn-user-manager.firebaseapp.com",
-                projectId: "vpn-user-manager",
-                storageBucket: "vpn-user-manager.firebasestorage.app",
-                messagingSenderId: "600555282917",
-                appId: "1:600555282917:web:51778f6ffeeb22082c0f0c",
-                measurementId: "G-RCX7FST8L5"
-            };
+        // User data and local storage management
+        let users = [];
+        const STORAGE_KEY = 'subscriptionManagerUsers';
 
+        // Load users from local storage
+        function loadUsers() {
             try {
-                const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
+                const storedUsers = localStorage.getItem(STORAGE_KEY);
+                if (storedUsers) {
+                    users = JSON.parse(storedUsers);
                 }
-
-                userId = auth.currentUser.uid;
-                document.getElementById('user-id').textContent = userId;
-                
-                setupRealtimeListener();
-
             } catch (error) {
-                console.error("Error initializing Firebase or signing in:", error);
-                document.getElementById('user-id').textContent = "Error loading user ID.";
+                console.error("Failed to load users from local storage:", error);
             }
-        };
+        }
 
-        const renderTable = (usersToRender) => {
-            const tableBody = document.getElementById('users-table-body');
-            tableBody.innerHTML = '';
+        // Save users to local storage
+        function saveUsers() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+            } catch (error) {
+                console.error("Failed to save users to local storage:", error);
+            }
+        }
 
-            if (usersToRender.length === 0) {
-                const noDataRow = document.createElement('tr');
-                noDataRow.innerHTML = `<td colspan="4" class="text-center py-4 text-gray-500">No users found.</td>`;
-                tableBody.appendChild(noDataRow);
+        // Helper function to calculate days left
+        function getDaysLeft(expiryDate) {
+            const today = new Date();
+            const expiry = new Date(expiryDate);
+            const timeDiff = expiry.getTime() - today.getTime();
+            return Math.ceil(timeDiff / (1000 * 3600 * 24));
+        }
+
+        // Render user list
+        function renderUserList() {
+            const userListDiv = document.getElementById('user-list');
+            userListDiv.innerHTML = '';
+
+            if (users.length === 0) {
+                userListDiv.innerHTML = '<p class="text-center text-gray-500">No users added yet. Use the form above to get started!</p>';
                 return;
             }
 
-            usersToRender.forEach(user => {
-                const username = user.username;
-                const expDateStr = user.expDate;
-                const expDate = new Date(expDateStr);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                const oneDay = 1000 * 60 * 60 * 24;
-                const diffInDays = Math.ceil((expDate.getTime() - today.getTime()) / oneDay);
+            users.forEach((user, index) => {
+                const daysLeft = getDaysLeft(user.expiryDate);
+                let status, statusColor;
 
-                let statusText, statusClass;
-                if (diffInDays < 0) {
-                    statusText = 'Expired';
-                    statusClass = 'status-expired';
-                } else if (diffInDays === 0) {
-                    statusText = 'Expires Today';
-                    statusClass = 'status-expires-today';
+                if (daysLeft <= 0) {
+                    status = 'Expired';
+                    statusColor = 'bg-red-500';
+                } else if (daysLeft <= 7) {
+                    status = `Expiring in ${daysLeft} day${daysLeft > 1 ? 's' : ''}`;
+                    statusColor = 'bg-yellow-500';
                 } else {
-                    statusText = `${diffInDays} days left`;
-                    statusClass = 'status-days-left';
+                    status = `Active (${daysLeft} day${daysLeft > 1 ? 's' : ''} left)`;
+                    statusColor = 'bg-green-500';
                 }
 
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="py-4 px-6">${username}</td>
-                    <td class="py-4 px-6">${expDateStr}</td>
-                    <td class="py-4 px-6">
-                        <span class="status-badge ${statusClass}">${statusText}</span>
-                    </td>
-                    <td class="py-4 px-6">
-                        <button class="edit-button action-button mr-2" data-id="${user.id}" data-username="${username}" data-expdate="${expDateStr}">Edit</button>
-                        <button class="delete-button action-button" data-id="${user.id}">Delete</button>
-                    </td>
+                const userCard = document.createElement('div');
+                userCard.className = 'bg-gray-700 rounded-xl shadow-md p-4 flex flex-col md:flex-row justify-between items-center transition-transform transform hover:scale-105 duration-200';
+                userCard.innerHTML = `
+                    <div class="flex-grow text-center md:text-left mb-4 md:mb-0">
+                        <p class="text-white text-lg font-bold">${user.username}</p>
+                        <p class="text-gray-400 text-sm">Expires: ${user.expiryDate}</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="status-badge ${statusColor} text-white">${status}</span>
+                        <button class="delete-btn bg-red-600 hover:bg-red-700 text-white rounded-full p-2" data-index="${index}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
                 `;
-                tableBody.appendChild(row);
+                userListDiv.appendChild(userCard);
             });
-        };
+        }
 
-        const setupRealtimeListener = () => {
-            const usersCollectionRef = collection(db, 'artifacts', appId, 'users', userId, 'users');
-            const q = query(usersCollectionRef);
-
-            onSnapshot(q, (snapshot) => {
-                allUsers = [];
-                snapshot.forEach((doc) => {
-                    allUsers.push({ id: doc.id, ...doc.data() });
-                });
-                renderTable(allUsers);
-            }, (error) => {
-                console.error("Error fetching data from Firestore:", error);
-            });
-        };
-
-        // Handle Add User Form Submission
-        document.getElementById('add-user-form').addEventListener('submit', async (e) => {
+        // Handle form submission
+        document.getElementById('user-form').addEventListener('submit', (e) => {
             e.preventDefault();
-            const username = document.getElementById('username-input').value;
-            const expDate = document.getElementById('exp-date-input').value;
+            const usernameInput = document.getElementById('username');
+            const expiryDateInput = document.getElementById('expiry-date');
 
-            if (!db || !userId) {
-                console.error("Firestore or User ID is not ready.");
-                return;
-            }
+            const username = usernameInput.value.trim();
+            const expiryDate = expiryDateInput.value;
 
-            try {
-                await addDoc(collection(db, 'artifacts', appId, 'users', userId, 'users'), {
-                    username: username,
-                    expDate: expDate,
-                    createdAt: new Date().toISOString()
-                });
-                document.getElementById('add-user-form').reset();
-            } catch (error) {
-                console.error("Error adding document:", error);
-            }
-        });
+            if (username && expiryDate) {
+                // Check if user already exists
+                const existingUser = users.find(u => u.username.toLowerCase() === username.toLowerCase());
+                if (existingUser) {
+                    showModal('Duplicate User', 'A user with this username already exists. Please choose a different name.');
+                    return;
+                }
 
-        // Handle Search Input
-        document.getElementById('search-input').addEventListener('input', (e) => {
-            const searchTerm = e.target.value.toLowerCase();
-            const filteredUsers = allUsers.filter(user => user.username.toLowerCase().includes(searchTerm));
-            renderTable(filteredUsers);
-        });
-
-        // Handle Edit and Delete Button Clicks (using event delegation on table body)
-        document.getElementById('users-table-body').addEventListener('click', async (e) => {
-            if (e.target.classList.contains('delete-button')) {
-                const docId = e.target.dataset.id;
-                document.getElementById('delete-modal').style.display = 'flex';
-                document.getElementById('confirm-delete-btn').onclick = async () => {
-                    document.getElementById('delete-modal').style.display = 'none';
-                    if (!db || !userId) {
-                        console.error("Firestore or User ID is not ready.");
-                        return;
-                    }
-                    try {
-                        await deleteDoc(doc(db, 'artifacts', appId, 'users', userId, 'users', docId));
-                    } catch (error) {
-                        console.error("Error deleting document:", error);
-                    }
-                };
-            } else if (e.target.classList.contains('edit-button')) {
-                const docId = e.target.dataset.id;
-                const username = e.target.dataset.username;
-                const expDate = e.target.dataset.expdate;
-                
-                document.getElementById('edit-modal').dataset.docId = docId;
-                document.getElementById('edit-modal-username').textContent = `Editing: ${username}`;
-                document.getElementById('edit-exp-date-input').value = expDate;
-                document.getElementById('edit-modal').style.display = 'flex';
+                const newUser = { username, expiryDate };
+                users.push(newUser);
+                saveUsers();
+                renderUserList();
+                usernameInput.value = '';
+                expiryDateInput.value = '';
+            } else {
+                showModal('Invalid Input', 'Please fill out both the username and expiry date fields.');
             }
         });
 
-        // Handle Modal Close Buttons
-        document.getElementById('cancel-delete-btn').addEventListener('click', () => {
-            document.getElementById('delete-modal').style.display = 'none';
-        });
-
-        document.getElementById('cancel-edit-btn').addEventListener('click', () => {
-            document.getElementById('edit-modal').style.display = 'none';
-        });
-
-        // Handle Save Edit Button Click
-        document.getElementById('save-edit-btn').addEventListener('click', async () => {
-            const docId = document.getElementById('edit-modal').dataset.docId;
-            const newExpDate = document.getElementById('edit-exp-date-input').value;
-            
-            document.getElementById('edit-modal').style.display = 'none';
-
-            if (!db || !userId) {
-                console.error("Firestore or User ID is not ready.");
-                return;
-            }
-
-            try {
-                await updateDoc(doc(db, 'artifacts', appId, 'users', userId, 'users', docId), {
-                    expDate: newExpDate
-                });
-            } catch (error) {
-                console.error("Error updating document:", error);
+        // Handle user deletion
+        document.getElementById('user-list').addEventListener('click', (e) => {
+            if (e.target.closest('.delete-btn')) {
+                const index = e.target.closest('.delete-btn').dataset.index;
+                users.splice(index, 1);
+                saveUsers();
+                renderUserList();
             }
         });
 
-        window.onload = initFirebaseAndAuth;
+        // Initial load and render
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUsers();
+            renderUserList();
+        });
     </script>
+
 </body>
 </html>
