@@ -1,13 +1,14 @@
 // Paste your Firebase config object here
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    databaseURL: "YOUR_DATABASE_URL",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
-};
+    apiKey: "AIzaSyCwA7rqlO_E5PHF-EYKgnl5H0D8qqNS1Mw",
+    authDomain: "vpn-user-manager.firebaseapp.com",
+    projectId: "vpn-user-manager",
+    storageBucket: "vpn-user-manager.firebasestorage.app",
+    messagingSenderId: "600555282917",
+    appId: "1:600555282917:web:51778f6ffeeb22082c0f0c",
+    measurementId: "G-RCX7FST8L5"
+  };
+
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
