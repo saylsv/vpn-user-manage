@@ -4,33 +4,267 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Expiration Manager</title>
-    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #374151;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 2rem;
+        }
+        .form-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .form-group input, .form-group button {
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #d1d5db;
+            outline: none;
+            transition: all 0.2s ease-in-out;
+            flex: 1 1 200px;
+        }
+        .form-group input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        .form-group button {
+            background-color: #2563eb;
+            color: #ffffff;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+        }
+        .form-group button:hover {
+            background-color: #1d4ed8;
+        }
+        .status-badge {
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
+        }
+        .status-expired {
+            background-color: #fecaca;
+            color: #b91c1c;
+        }
+        .status-days-left {
+            background-color: #bfdbfe;
+            color: #1d4ed8;
+        }
+        .status-expires-today {
+            background-color: #fcd34d;
+            color: #92400e;
+        }
+        th, td {
+            padding: 1rem;
+            text-align: left;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+        }
+        thead {
+            background-color: #f9fafb;
+        }
+        tbody tr:nth-child(odd) {
+            background-color: #f9fafb;
+        }
+        tbody tr:hover {
+            background-color: #e5e7eb;
+        }
+        .user-id-text {
+            word-break: break-all;
+            background-color: #e5e7eb;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+    </style>
 </head>
-<body>
-    <h1>User Expiration Manager</h1>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
 
-    <form id="user-form">
-        <input type="text" id="username" placeholder="Username" required>
-        <input type="date" id="exp-date" required>
-        <button type="submit">Add User</button>
-    </form>
+    <div class="container">
+        <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">User Expiration Manager</h1>
+        <p class="text-gray-600 mb-4 text-center">
+            This app demonstrates real-time user management with Firestore.
+        </p>
 
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Username</th>
-                    <th>Expiration Date</th>
-                    <th>Days Left / Status</th>
-                </tr>
-            </thead>
-            <tbody id="user-table-body">
+        <!-- Display the User ID for collaboration -->
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold mb-2">Your User ID:</h2>
+            <p id="user-id" class="user-id-text text-sm font-mono text-gray-700">Loading...</p>
+        </div>
+
+        <!-- Form to add new users -->
+        <form id="add-user-form" class="mb-6">
+            <div class="form-group">
+                <input type="text" id="username-input" placeholder="Username" required class="flex-grow w-full md:w-auto">
+                <input type="date" id="exp-date-input" required class="flex-grow w-full md:w-auto">
+                <button type="submit" class="flex-grow w-full md:w-auto">Add User</button>
+            </div>
+        </form>
+
+        <!-- Table to display users -->
+        <div class="overflow-x-auto rounded-lg">
+            <table class="w-full text-sm text-gray-700">
+                <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
+                    <tr>
+                        <th scope="col" class="py-3 px-6 rounded-tl-lg">Username</th>
+                        <th scope="col" class="py-3 px-6">Expiration Date</th>
+                        <th scope="col" class="py-3 px-6 rounded-tr-lg">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="users-table-body" class="bg-white divide-y divide-gray-200">
+                    <!-- Data will be populated here by JavaScript -->
                 </tbody>
-        </table>
+            </table>
+        </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="app.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Enable debug logging for Firestore
+        setLogLevel('debug');
+
+        // Global variables for Firebase configuration, provided by the environment.
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db, auth, userId;
+
+        const initFirebaseAndAuth = async () => {
+            if (!firebaseConfig) {
+                console.error("Firebase config is not available.");
+                return;
+            }
+
+            try {
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                // Sign in with custom token if available, otherwise sign in anonymously.
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                userId = auth.currentUser.uid;
+                document.getElementById('user-id').textContent = userId;
+
+                // Start real-time listener for user data
+                setupRealtimeListener();
+
+            } catch (error) {
+                console.error("Error initializing Firebase or signing in:", error);
+                document.getElementById('user-id').textContent = "Error loading user ID.";
+            }
+        };
+
+        const setupRealtimeListener = () => {
+            // Firestore collection path for private data
+            const usersCollectionRef = collection(db, 'artifacts', appId, 'users', userId, 'users');
+            const q = query(usersCollectionRef);
+
+            // Set up real-time listener
+            onSnapshot(q, (snapshot) => {
+                const tableBody = document.getElementById('users-table-body');
+                tableBody.innerHTML = ''; // Clear existing data
+
+                if (snapshot.empty) {
+                    console.log("No users found.");
+                    const noDataRow = document.createElement('tr');
+                    noDataRow.innerHTML = `<td colspan="3" class="text-center py-4 text-gray-500">No users added yet.</td>`;
+                    tableBody.appendChild(noDataRow);
+                    return;
+                }
+
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const username = data.username;
+                    const expDateStr = data.expDate;
+                    const expDate = new Date(expDateStr);
+
+                    // Calculate days left and determine status
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const oneDay = 1000 * 60 * 60 * 24;
+                    const diffInDays = Math.ceil((expDate.getTime() - today.getTime()) / oneDay);
+
+                    let statusText, statusClass;
+
+                    if (diffInDays < 0) {
+                        statusText = 'Expired';
+                        statusClass = 'status-expired';
+                    } else if (diffInDays === 0) {
+                        statusText = 'Expires Today';
+                        statusClass = 'status-expires-today';
+                    } else {
+                        statusText = `${diffInDays} days left`;
+                        statusClass = 'status-days-left';
+                    }
+
+                    // Create and append the new table row
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="py-4 px-6">${username}</td>
+                        <td class="py-4 px-6">${expDateStr}</td>
+                        <td class="py-4 px-6">
+                            <span class="status-badge ${statusClass}">${statusText}</span>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }, (error) => {
+                console.error("Error fetching data from Firestore:", error);
+            });
+        };
+
+        // Handle form submission
+        document.getElementById('add-user-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username-input').value;
+            const expDate = document.getElementById('exp-date-input').value;
+
+            if (!db || !userId) {
+                console.error("Firestore or User ID is not ready.");
+                return;
+            }
+
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'users', userId, 'users'), {
+                    username: username,
+                    expDate: expDate,
+                    createdAt: new Date().toISOString()
+                });
+                document.getElementById('add-user-form').reset();
+            } catch (error) {
+                console.error("Error adding document:", error);
+            }
+        });
+
+        // Initialize the application on window load
+        window.onload = initFirebaseAndAuth;
+    </script>
 </body>
 </html>
