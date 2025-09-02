@@ -53,7 +53,10 @@
 
         <!-- User List Display -->
         <div class="bg-gray-800 rounded-2xl shadow-lg p-6">
-            <h2 class="text-2xl font-bold mb-4 text-white">User List</h2>
+            <div class="flex flex-col md:flex-row justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-white mb-2 md:mb-0">User List</h2>
+                <input type="text" id="search-input" placeholder="Search users..." class="w-full md:w-1/3 rounded-md border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-indigo-500 shadow-sm p-2 transition-colors duration-200">
+            </div>
             <div id="user-list" class="space-y-4">
                 <!-- User cards will be rendered here by JavaScript -->
             </div>
@@ -91,6 +94,7 @@
         // User data and local storage management
         let users = [];
         const STORAGE_KEY = 'subscriptionManagerUsers';
+        const searchInput = document.getElementById('search-input');
 
         // Load users from local storage
         function loadUsers() {
@@ -122,16 +126,16 @@
         }
 
         // Render user list
-        function renderUserList() {
+        function renderUserList(filteredUsers = users) {
             const userListDiv = document.getElementById('user-list');
             userListDiv.innerHTML = '';
 
-            if (users.length === 0) {
-                userListDiv.innerHTML = '<p class="text-center text-gray-500">No users added yet. Use the form above to get started!</p>';
+            if (filteredUsers.length === 0) {
+                userListDiv.innerHTML = '<p class="text-center text-gray-500">No matching users found.</p>';
                 return;
             }
 
-            users.forEach((user, index) => {
+            filteredUsers.forEach((user, index) => {
                 const daysLeft = getDaysLeft(user.expiryDate);
                 let status, statusColor, toggleText;
 
@@ -162,10 +166,10 @@
                     </div>
                     <div class="flex items-center space-x-2">
                         <span class="status-badge ${statusColor} text-white">${status}</span>
-                        <button class="toggle-btn bg-blue-600 hover:bg-blue-700 text-white rounded-md px-3 py-1 text-sm transition-colors duration-200" data-index="${index}">
+                        <button class="toggle-btn bg-blue-600 hover:bg-blue-700 text-white rounded-md px-3 py-1 text-sm transition-colors duration-200" data-index="${users.findIndex(u => u.username === user.username)}">
                             ${toggleText}
                         </button>
-                        <button class="delete-btn bg-red-600 hover:bg-red-700 text-white rounded-full p-2" data-index="${index}">
+                        <button class="delete-btn bg-red-600 hover:bg-red-700 text-white rounded-full p-2" data-index="${users.findIndex(u => u.username === user.username)}">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
@@ -219,6 +223,13 @@
                 saveUsers();
                 renderUserList();
             }
+        });
+
+        // Handle search input
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filteredUsers = users.filter(user => user.username.toLowerCase().includes(searchTerm));
+            renderUserList(filteredUsers);
         });
 
         // Initial load and render
