@@ -63,12 +63,19 @@
         </div>
     </div>
 
-    <!-- Custom Modal for Alerts -->
+    <!-- Custom Modal for Alerts and Date Input -->
     <div id="custom-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4 z-50">
         <div class="bg-gray-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center">
             <h3 id="modal-title" class="text-xl font-bold text-white mb-4"></h3>
             <p id="modal-message" class="text-gray-300 mb-6"></p>
-            <button id="modal-close-button" class="py-2 px-4 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 transition-colors duration-200">OK</button>
+            <div id="modal-date-input" class="hidden">
+                <label for="modal-expiry-date" class="block text-sm font-medium text-gray-300 mb-2">New Expiry Date</label>
+                <input type="date" id="modal-expiry-date" class="w-full rounded-md border-gray-600 bg-gray-700 text-white p-2 mb-4">
+            </div>
+            <div class="flex justify-center space-x-4">
+                <button id="modal-close-button" class="py-2 px-4 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 transition-colors duration-200">OK</button>
+                <button id="modal-save-button" class="hidden py-2 px-4 rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors duration-200">Save</button>
+            </div>
         </div>
     </div>
 
@@ -78,12 +85,33 @@
         const modalTitle = document.getElementById('modal-title');
         const modalMessage = document.getElementById('modal-message');
         const modalCloseButton = document.getElementById('modal-close-button');
+        const modalDateInputDiv = document.getElementById('modal-date-input');
+        const modalExpiryDateInput = document.getElementById('modal-expiry-date');
+        const modalSaveButton = document.getElementById('modal-save-button');
+        
+        // This variable will store the index of the user being edited.
+        let userToUpdateIndex = -1; 
 
         function showModal(title, message) {
             modalTitle.textContent = title;
             modalMessage.textContent = message;
+            modalCloseButton.classList.remove('hidden');
+            modalDateInputDiv.classList.add('hidden');
+            modalSaveButton.classList.add('hidden');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+        }
+
+        function showExpiryDateModal(index) {
+            userToUpdateIndex = index;
+            modalTitle.textContent = 'Renew Subscription';
+            modalMessage.textContent = 'Please select a new expiry date to re-enable this user.';
+            modalCloseButton.classList.add('hidden');
+            modalDateInputDiv.classList.remove('hidden');
+            modalSaveButton.classList.remove('hidden');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            modalExpiryDateInput.value = ''; // Clear previous value
         }
 
         modalCloseButton.addEventListener('click', () => {
@@ -146,7 +174,7 @@
                 } else if (daysLeft <= 0) {
                     status = 'Expired';
                     statusColor = 'bg-red-500';
-                    toggleText = 'Disable';
+                    toggleText = 'Renew';
                 } else if (daysLeft <= 7) {
                     status = `Expiring in ${daysLeft} day${daysLeft > 1 ? 's' : ''}`;
                     statusColor = 'bg-yellow-500';
@@ -218,10 +246,37 @@
                 saveUsers();
                 renderUserList();
             } else if (toggleBtn) {
-                const index = toggleBtn.dataset.index;
-                users[index].enabled = !users[index].enabled;
+                const index = parseInt(toggleBtn.dataset.index);
+                const user = users[index];
+                const daysLeft = getDaysLeft(user.expiryDate);
+                
+                if (daysLeft <= 0) {
+                    // Show modal to input new expiry date for expired user
+                    showExpiryDateModal(index);
+                } else {
+                    // For active or disabled users, just toggle the status
+                    user.enabled = !user.enabled;
+                    saveUsers();
+                    renderUserList();
+                }
+            }
+        });
+        
+        // Handle saving the new expiry date from the modal
+        modalSaveButton.addEventListener('click', () => {
+            const newExpiryDate = modalExpiryDateInput.value;
+            if (newExpiryDate && userToUpdateIndex !== -1) {
+                const user = users[userToUpdateIndex];
+                user.expiryDate = newExpiryDate;
+                user.enabled = true; // Re-enable the user
                 saveUsers();
                 renderUserList();
+                
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+                userToUpdateIndex = -1; // Reset the index
+            } else {
+                showModal('Invalid Date', 'Please select a valid expiry date.');
             }
         });
 
